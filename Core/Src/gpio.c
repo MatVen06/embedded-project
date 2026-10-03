@@ -40,6 +40,7 @@
         * EXTI
      PA2   ------> USART2_TX
      PA3   ------> USART2_RX
+     PA5   ------> S_TIM1_CH1
 */
 void MX_GPIO_Init(void)
 {
@@ -57,6 +58,14 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.Alternate = GPIO_AF1_USART2;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PA5 */
+  GPIO_InitStruct.Pin = GPIO_PIN_5;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF5_TIM1;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 }
