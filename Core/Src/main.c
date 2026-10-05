@@ -26,6 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
   #include "recruiting/telemetry/telemetry.h"
+  #include "recruiting/button/button.h"
 
 /* USER CODE END Includes */
 
@@ -102,7 +103,17 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    telemetry_update();
+    button_state_update();
+    if(button_cli_mode() == false)
+    {
+      telemetry_update();
+    }
+    else 
+    {
+
+    }
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
