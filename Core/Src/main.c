@@ -27,6 +27,7 @@
 /* USER CODE BEGIN Includes */
   #include "recruiting/telemetry/telemetry.h"
   #include "recruiting/button/button.h"
+  #include "recruiting/cli/cli.h"
 
 /* USER CODE END Includes */
 
@@ -96,21 +97,31 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   telemetry_init();
+  cli_init();
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  static bool prev_cli_mode = false;
   while (1)
   {
     button_state_update();
+    bool current_cli_mode = button_cli_mode();
+
+    // Detect transition from Streaming (false) -> CLI Mode (true)
+    if (current_cli_mode && !prev_cli_mode)
+    {
+        cli_print_menu();
+    }
+    prev_cli_mode = current_cli_mode;
     if(button_cli_mode() == false)
     {
       telemetry_update();
     }
     else 
     {
-
+      cli_update();
     }
 
 
