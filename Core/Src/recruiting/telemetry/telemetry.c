@@ -1,7 +1,7 @@
 #include "recruiting/telemetry/telemetry.h"
 #include "adc.h"
 #include "usart.h"
-#include<stdio.h>
+#include <stdio.h>
 #include <math.h>
 
 #define POT_TEMP_MIN    0.0f
@@ -165,4 +165,14 @@ static float ntc_to_celsius(uint16_t raw_adc)
     void telemetry_noise_toggle(void)
     {
         telemetry_noise_enable = !telemetry_noise_enable;
+    }
+
+    uint16_t telemetry_get_raw_pot(void)
+    {
+        return telemetry_adc_buffer[0];
+    }
+
+    uint16_t telemetry_get_raw_ntc(void)
+    {
+        return telemetry_adc_buffer[1];
     }

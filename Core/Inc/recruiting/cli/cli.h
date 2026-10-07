@@ -1,10 +1,16 @@
 #ifndef CLI_H
 #define CLI_H
-#define CLI_BUFFER_SIZE 32
 #include <stdint.h>
 #include<stdbool.h>
 #include<stdio.h>
 #include<string.h>
+
+
+    /*!
+     * \brief macro for the starting size of the array that reads the characters in input from the user 
+     */
+    #define CLI_BUFFER_SIZE 32
+
     /*!
      * \brief primes the first interrupt when the board boots up
     

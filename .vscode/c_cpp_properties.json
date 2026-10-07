@@ -10,6 +10,8 @@
             "includePath": [
                 "/home/matven/Documents/Uni/embedded-project/Core/Inc",
                 "/home/matven/Documents/Uni/embedded-project/Core/Src",
+                "/home/matven/Documents/Uni/embedded-project/.pio/libdeps/nucleo_c031c6/libfsm-sw/include",
+                "/home/matven/Documents/Uni/embedded-project/.pio/libdeps/nucleo_c031c6/libfsm-sw/src",
                 "/home/matven/.platformio/packages/framework-stm32cubec0/Drivers/CMSIS/Include",
                 "/home/matven/.platformio/packages/framework-stm32cubec0/Drivers/CMSIS/Device/ST/STM32C0xx/Include",
                 "/home/matven/.platformio/packages/framework-stm32cubec0/Drivers/STM32C0xx_HAL_Driver/Inc",
@@ -23,6 +25,8 @@
                 "path": [
                     "/home/matven/Documents/Uni/embedded-project/Core/Inc",
                     "/home/matven/Documents/Uni/embedded-project/Core/Src",
+                    "/home/matven/Documents/Uni/embedded-project/.pio/libdeps/nucleo_c031c6/libfsm-sw/include",
+                    "/home/matven/Documents/Uni/embedded-project/.pio/libdeps/nucleo_c031c6/libfsm-sw/src",
                     "/home/matven/.platformio/packages/framework-stm32cubec0/Drivers/CMSIS/Include",
                     "/home/matven/.platformio/packages/framework-stm32cubec0/Drivers/CMSIS/Device/ST/STM32C0xx/Include",
                     "/home/matven/.platformio/packages/framework-stm32cubec0/Drivers/STM32C0xx_HAL_Driver/Inc",

@@ -28,6 +28,7 @@
   #include "recruiting/telemetry/telemetry.h"
   #include "recruiting/button/button.h"
   #include "recruiting/cli/cli.h"
+  #include "recruiting/fsm/fsm.h"
 
 /* USER CODE END Includes */
 
@@ -98,7 +99,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   telemetry_init();
   cli_init();
-
+  fsm_app_init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -107,6 +108,9 @@ int main(void)
   while (1)
   {
     button_state_update();
+    fsm_app_update();
+
+    /*
     bool current_cli_mode = button_cli_mode();
 
     // Detect transition from Streaming (false) -> CLI Mode (true)
@@ -123,8 +127,9 @@ int main(void)
     {
       cli_update();
     }
+    */
 
-
+    
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
