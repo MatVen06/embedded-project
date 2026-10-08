@@ -27,5 +27,10 @@
      */
     void cli_print_menu(void);
 
+    /*!
+     * \brief returns true if the word "run" was given as input from the user
+     */ 
+
+    bool cli_input_run(void);
 
 #endif 

@@ -9,9 +9,9 @@
     void button_state_update(void);
 
     /*!
-     * \brief returns true if its in CLI mode, pauses telemetry stream
+     * \brief detects whether the button was pressed or not
      */
-    bool button_cli_mode(void);
+    bool button_was_pressed(void);
 
 
 #endif

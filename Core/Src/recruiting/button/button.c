@@ -21,15 +21,18 @@ void button_state_update(void)
         if(HAL_GetTick() - button_history >=200)
         {
             button_history = HAL_GetTick();
-            button_state=!button_state;
-            HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5); 
- 
-
+            button_state=true;
         }
     }
 }
 
-bool button_cli_mode(void) 
+bool button_was_pressed(void) 
 {
-    return button_state;
+    if(button_state)
+    {
+        button_state = false;
+        return true;
+    }
+    return false;
+
 }

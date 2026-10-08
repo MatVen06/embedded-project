@@ -14,6 +14,10 @@
 #define POST_POT_RAW_MIN 0
 #define POST_POT_RAW_MAX 4085
 
+#define WARNING_THRESHOLD 1000
+
+static uint32_t fsm_led_on_time = 75;
+static uint32_t fsm_led_off_time = 425;
 
 static struct FSMcontext fsm_ctx;
 
@@ -24,44 +28,41 @@ static void routine_listening(void* data);
 static void routine_paused(void* data);
 static void routine_warning(void* data);
 static void routine_fatal(void* data);
-static void dummy_transition(void* data)
-{
-    (void)data;
-}
+
 
 
 static struct Transition post_transitions[] = 
 {
-    { .to = STATE_WAITING, .function = dummy_transition },
-    { .to = STATE_FATAL, .function =  dummy_transition},
+    { .to = STATE_WAITING, .function = NULL},
+    { .to = STATE_FATAL, .function =  NULL},
 };
 
 static struct Transition waiting_transitions[] = 
 {
-    { .to = STATE_LISTENING, .function = dummy_transition},
-    { .to = STATE_FATAL, .function = dummy_transition },
+    { .to = STATE_LISTENING, .function = NULL},
+    { .to = STATE_FATAL, .function = NULL },
 };
 static struct Transition listening_transitions[] = 
 {
-    { .to = STATE_WARNING, .function = dummy_transition },
-    { .to = STATE_FATAL, .function = dummy_transition },
-    { .to = STATE_PAUSED, .function = dummy_transition },
+    { .to = STATE_WARNING, .function = NULL},
+    { .to = STATE_FATAL, .function = NULL},
+    { .to = STATE_PAUSED, .function = NULL},
 };
 
 static struct Transition warning_transitions[] = 
 {
-    { .to = STATE_WAITING, .function = dummy_transition },
-    { .to = STATE_FATAL, .function = dummy_transition },
+    { .to = STATE_WAITING, .function = NULL },
+    { .to = STATE_FATAL, .function = NULL },
 };
 
 static struct Transition paused_transitions[] = 
 {
-    { .to = STATE_LISTENING, .function = dummy_transition },
-    { .to = STATE_FATAL, .function = dummy_transition },
+    { .to = STATE_LISTENING, .function = NULL },
+    { .to = STATE_FATAL, .function = NULL},
 };
 static struct Transition fatal_transitions[] = 
 {
-    { .to = STATE_FATAL, .function = dummy_transition }
+    { .to = STATE_FATAL, .function = NULL }
 };
 
 
@@ -118,23 +119,20 @@ void fsm_app_init(void)
     fsm_ctx.warning_start_time = 0;
     fsm_ctx.error_description = NULL;
     fsm_ctx.previous_state = STATE_COUNT;
-
+    cli_init();
+    telemetry_init();
     fsm_api_init(&fsm_ctx.handler, states, STATE_COUNT, STATE_POST);
 }
 
 void fsm_app_update(void)
 {    
-   // HAL_UART_Transmit(&huart2, (uint8_t*)"[UPDATE]\r\n", 10, 100);
-    //routine_post(&fsm_ctx);  Temporary direct bypass test
-    HAL_UART_Transmit(&huart2, (uint8_t*)"[RUN]\r\n", 7, 100);
     fsm_api_run_state(&fsm_ctx.handler, &fsm_ctx);
-    HAL_UART_Transmit(&huart2, (uint8_t*)"[DONE]\r\n", 8, 100);
 }
 
 
 static void routine_post(void* data)
 {
-    HAL_UART_Transmit(&huart2, (uint8_t*)"[POST Running]\r\n", 16, 100);
+   // HAL_UART_Transmit(&huart2, (uint8_t*)"[POST Running]\r\n", 16, 100);
     struct FSMcontext *ctx = (struct FSMcontext *)data;
 
     if(HAL_GetTick() <100)
@@ -143,9 +141,9 @@ static void routine_post(void* data)
     }
     uint16_t pot_raw = telemetry_get_raw_pot();
     uint16_t ntc_raw = telemetry_get_raw_ntc();
-    char tx_buffer[64];
-    int len = snprintf(tx_buffer, sizeof(tx_buffer), "POT: %u, NTC: %u\r\n", pot_raw, ntc_raw);
-    HAL_UART_Transmit(&huart2, (uint8_t*)tx_buffer, len, 100);
+  //  char tx_buffer[64];
+  //  int len = snprintf(tx_buffer, sizeof(tx_buffer), "POT: %u, NTC: %u\r\n", pot_raw, ntc_raw);
+   // HAL_UART_Transmit(&huart2, (uint8_t*)tx_buffer, len, 100);
 
 
     if(pot_raw < POST_POT_RAW_MIN || pot_raw >= POST_POT_RAW_MAX)
@@ -164,39 +162,145 @@ static void routine_post(void* data)
     }
 }
 
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    if (htim->Instance == TIM14)
+    {
+        if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_5) == GPIO_PIN_SET)
+        {
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+            __HAL_TIM_SET_AUTORELOAD(htim, fsm_led_off_time - 1);
+        }
+        else
+        {
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+            __HAL_TIM_SET_AUTORELOAD(htim, fsm_led_on_time - 1);      
+        }
+    }
+
+}
+
 static void routine_waiting(void* data)
 {
     struct FSMcontext *ctx = (struct FSMcontext *)data;
     if(ctx->previous_state != STATE_WAITING)
     {
         ctx->previous_state = STATE_WAITING;
-        
-        // Diagnostic serial print
-        char msg[] = "--- FSM: Entered WAITING state ---\r\n";
-        HAL_UART_Transmit(&huart2, (uint8_t*)msg, sizeof(msg) - 1, HAL_MAX_DELAY);
-
-        // Corrected timer PWM startup
+        fsm_led_off_time = 425;
+        fsm_led_on_time = 75;
+        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+        HAL_TIM_Base_Start_IT(&htim14);
         HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 500);
         __HAL_TIM_MOE_ENABLE(&htim1);
-
         cli_print_menu();
+  
+    
+
     }
     cli_update();
-    /*
-    if(button_cli_mode())
+    button_state_update();
+    uint32_t t = HAL_GetTick() % 2000;
+    uint32_t compare_val = 0;
+
+    if(t<=1000)
+    {
+        compare_val = (t*999)/1000; 
+    }
+    else
+    {
+        compare_val = ((2000-t)*999)/1000;
+    }
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_val);
+
+    if(button_was_pressed() || cli_input_run())
     {
         fsm_api_transition_to(&ctx->handler, STATE_LISTENING);
-
     }
-    */
+    
 }
 static void routine_listening(void* data)
 {
-    
+    struct FSMcontext *ctx = (struct FSMcontext *)data;
+    if (ctx->previous_state != STATE_LISTENING)
+    {
+        fsm_led_off_time = 40;
+        fsm_led_on_time = 160;
+        ctx->previous_state = STATE_LISTENING;
+        HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n--- Entered LISTENING State ---\r\n", 35, 100);
+        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+        __HAL_TIM_SET_AUTORELOAD(&htim14, fsm_led_on_time - 1);
+        __HAL_TIM_SET_COUNTER(&htim14, 0);
+    }
+    button_state_update();
+    uint16_t pot_raw = telemetry_get_raw_pot();
+    uint16_t ntc_raw = telemetry_get_raw_ntc();
+    uint16_t diff = 0;
+    uint16_t compare_val = 0;
+    if(ntc_raw <= pot_raw)
+    {
+        compare_val = 0;
+        ctx->time_over_threshold = 0;
+    }
+    else if(ntc_raw > pot_raw)
+    {
+        diff = ntc_raw - pot_raw;
+        if(diff >= WARNING_THRESHOLD)
+        {
+            compare_val = 999;
+            if(ctx->time_over_threshold == 0)
+            {
+                ctx->time_over_threshold = HAL_GetTick();
+            }
+            else if(HAL_GetTick() - ctx->time_over_threshold >= 5000)
+            {
+                fsm_api_transition_to(&ctx->handler, STATE_WARNING);
+            }
+        }
+        else 
+        {
+            ctx->time_over_threshold = 0;
+            compare_val = (diff*999)/WARNING_THRESHOLD;
+        }
+    }
+    if(HAL_GetTick() - ctx->uart_last_tx_time >= 100)
+    {
+        ctx->uart_last_tx_time = HAL_GetTick();
+        char msg_buffer[64];
+        int len = snprintf(msg_buffer, sizeof(msg_buffer), "POT: %u, NTC: %u, DIFF: %u\r\n", pot_raw, ntc_raw, diff);
+        HAL_UART_Transmit(&huart2, (uint8_t*)msg_buffer, len, HAL_MAX_DELAY);
+    }
+
+    if(button_was_pressed())
+    {
+        ctx->time_over_threshold = 0;
+        fsm_api_transition_to(&ctx->handler, STATE_PAUSED);
+    }
+
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_val);
 }
 static void routine_warning(void* data)
 {
+    struct FSMcontext (*ctx) = (struct FSMcontext*)data;
+    if(ctx->previous_state != STATE_WARNING)
+    {
+        HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n--- Entered WARNING State ---\r\n", 35, 100);
+        ctx->previous_state = STATE_WARNING;
+
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+        HAL_TIM_Base_Stop(&htim14);
+        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+        ctx->warning_start_time = HAL_GetTick();
+        ctx->warning_press_time = 0;
+    }  
+    if(HAL_GetTick() - ctx->uart_last_tx_time >= 200)
+    {
+        ctx->uart_last_tx_time = HAL_GetTick;
+        HAL_UART_Transmit(&huart2, (uint8_t*)"\r\nWARNING\r\n", 35, 100);
+    }
+
+    
+
     
 }
 static void routine_paused(void* data)

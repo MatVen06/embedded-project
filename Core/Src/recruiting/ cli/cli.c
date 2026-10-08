@@ -6,6 +6,7 @@ static uint8_t cli_byte;
 static volatile bool cli_byte_received = false;
 static char cli_buffer[CLI_BUFFER_SIZE];
 static uint8_t cli_buffer_index = 0;
+static bool run_command_received = false;
 
 void cli_init(void)
 {
@@ -44,6 +45,10 @@ void cli_update(void)
                 {
                     telemetry_noise_toggle();
                 }
+                else if(strcmp(cli_buffer, "run")==0)
+                {
+                    run_command_received = true;
+                }
 
                 cli_buffer_index=0;
             }
@@ -71,8 +76,19 @@ void cli_print_menu(void)
         "  raw            -> Stream raw data (disables noise)\r\n"
         "  moving average -> Stream 100-sample filtered average\r\n"
         "  random noise   -> Toggle artificial noise\r\n"
+        "  run            -> Start streaming (enter Listening state)\r\n"
         "Press button to resume streaming.\r\n"
         "> ";
 
     HAL_UART_Transmit(&huart2, (uint8_t*)menu_text, sizeof(menu_text) - 1, HAL_MAX_DELAY);
+}
+
+bool cli_input_run(void)
+{
+    if(run_command_received)
+    {
+        run_command_received = false;
+        return true;
+    }
+    return false;
 }

@@ -100,16 +100,9 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Transmit(&huart2, (uint8_t*)"[1] Peripherals OK\r\n", 20, 100);
 
-  telemetry_init();
-  HAL_UART_Transmit(&huart2, (uint8_t*)"[2] Telemetry OK\r\n", 18, 100);
-
-  cli_init();
-  HAL_UART_Transmit(&huart2, (uint8_t*)"[3] CLI OK\r\n", 12, 100);
 
   fsm_app_init();
-  HAL_UART_Transmit(&huart2, (uint8_t*)"[4] FSM Init OK\r\n", 17, 100);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -117,13 +110,9 @@ int main(void)
   //static bool prev_cli_mode = false;
   while (1)
   {
-   // HAL_UART_Transmit(&huart2, (uint8_t*)"[LOOP]\r\n", 8, 100);
     button_state_update();
 
-   // HAL_UART_Transmit(&huart2, (uint8_t*)"[BTN_OK]\r\n", 10, 100);
     fsm_app_update();
-
-   // HAL_UART_Transmit(&huart2, (uint8_t*)"[FSM_OK]\r\n", 10, 100);
 
     /*
     bool current_cli_mode = button_cli_mode();
