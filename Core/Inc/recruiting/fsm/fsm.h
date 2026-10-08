@@ -8,11 +8,11 @@
 
 enum fsm_state_id
 {
-    STATE_POST,
+    STATE_POST = 0,
     STATE_WAITING,
     STATE_LISTENING,
-    STATE_PAUSED,
     STATE_WARNING,
+    STATE_PAUSED,
     STATE_FATAL,
     STATE_COUNT
 };
@@ -25,6 +25,7 @@ struct FSMcontext
     uint32_t warning_press_time;
     uint32_t uart_last_tx_time;
     const char* error_description;
+    enum fsm_state_id previous_state
 };
 
 

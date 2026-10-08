@@ -69,6 +69,10 @@ void Error_Handler(void);
 #define VCP_USART2_TX_GPIO_Port GPIOA
 #define VCP_USART2_RX_Pin GPIO_PIN_3
 #define VCP_USART2_RX_GPIO_Port GPIOA
+#define BOARD_LED_Pin GPIO_PIN_5
+#define BOARD_LED_GPIO_Port GPIOA
+#define EXTERNAL_LED_Pin GPIO_PIN_8
+#define EXTERNAL_LED_GPIO_Port GPIOA
 #define DEBUG_SWDIO_Pin GPIO_PIN_13
 #define DEBUG_SWDIO_GPIO_Port GPIOA
 #define DEBUG_SWCLK_Pin GPIO_PIN_14
