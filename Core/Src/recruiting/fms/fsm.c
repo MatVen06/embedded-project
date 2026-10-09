@@ -378,12 +378,30 @@ static void routine_paused(void* data)
 static void routine_fatal(void* data)
 {
     struct FSMcontext *ctx = (struct FSMcontext *)data;
-    if (ctx->error_description != NULL)
+    if(ctx->previous_state != STATE_FATAL)
     {
-        HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n--- Entered FATAL State ---\r\n", strlen("\r\n--- Entered FATAL State ---\r\n"), HAL_MAX_DELAY);
-        HAL_UART_Transmit(&huart2, (uint8_t*)ctx->error_description, strlen(ctx->error_description), HAL_MAX_DELAY);
-        HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n", 2, HAL_MAX_DELAY);
-        ctx->error_description = NULL; // Print once
+        ctx->previous_state = STATE_FATAL;
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+        fsm_led_off_time = 20;
+        fsm_led_on_time = 20;
+        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET); 
+        __HAL_TIM_SET_AUTORELOAD(&htim14, fsm_led_on_time - 1);
+        __HAL_TIM_SET_COUNTER(&htim14, 0);
+        HAL_TIM_Base_Start_IT(&htim14);
+    }
+
+    if(HAL_GetTick() - ctx->uart_last_tx_time >= 100)
+    {
+        ctx->uart_last_tx_time = HAL_GetTick();
+        char error_msg[128];
+        int len = snprintf(error_msg, sizeof(error_msg), "ERROR: %s\r\n", 
+                   ctx->error_description ? ctx->error_description : "Unknown error");
+        HAL_UART_Transmit(&huart2, (uint8_t*)error_msg, len, 100);
+    }
+
+    if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == GPIO_PIN_RESET)
+    {
+        NVIC_SystemReset();
     }
 
 }
