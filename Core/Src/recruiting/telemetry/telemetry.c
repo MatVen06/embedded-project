@@ -128,6 +128,11 @@ static float ntc_to_celsius(uint16_t raw_adc)
                     pot_sum = pot_sum + telemetry_pot_history[i];
                     ntc_sum = ntc_sum + telemetry_ntc_history[i];
                 }
+
+                if(divisor == 0)
+                {
+                    divisor == 1;
+                }
                 pot_sum = pot_sum / divisor;
                 ntc_sum = ntc_sum / divisor;
                 float pot_c = pot_to_celsius((uint16_t)pot_sum);

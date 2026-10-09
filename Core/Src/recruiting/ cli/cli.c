@@ -31,25 +31,32 @@ void cli_update(void)
 
             if(cli_buffer_index > 0)
             {
+
                 cli_buffer[cli_buffer_index] = '\0';
 
                 if(strcmp(cli_buffer, "raw") == 0)
                 {
+                    HAL_UART_Transmit(&huart2, (uint8_t*)"\r\nMode set to RAW\r\n", 19, HAL_MAX_DELAY);
                     telemetry_set_mode(RAW);
                 }
                 else if(strcmp(cli_buffer, "moving average") == 0)
                 {
+                    HAL_UART_Transmit(&huart2, (uint8_t*)"\r\nToggled moving average\r\n", 26, HAL_MAX_DELAY);
                     telemetry_set_mode(AVG);
                 }
                 else if(strcmp(cli_buffer, "random noise") == 0)
                 {
+                    HAL_UART_Transmit(&huart2, (uint8_t*)"\r\nToggled random noise\r\n", 24, HAL_MAX_DELAY);
                     telemetry_noise_toggle();
                 }
                 else if(strcmp(cli_buffer, "run")==0)
                 {
                     run_command_received = true;
                 }
-
+                else
+                {
+                    HAL_UART_Transmit(&huart2, (uint8_t*)"\r\nUnknown command\r\n", 19, HAL_MAX_DELAY);
+                }
                 cli_buffer_index=0;
             }
         }
@@ -74,7 +81,7 @@ void cli_print_menu(void)
         "\r\n--- CLI MODE ACTIVE ---\r\n"
         "Available commands:\r\n"
         "  raw            -> Stream raw data (disables noise)\r\n"
-        "  moving average -> Stream 100-sample filtered average\r\n"
+        "  moving average -> Stream 150-sample filtered average\r\n"
         "  random noise   -> Toggle artificial noise\r\n"
         "  run            -> Start streaming (enter Listening state)\r\n"
         "Press button to resume streaming.\r\n"

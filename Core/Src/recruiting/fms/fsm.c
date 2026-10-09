@@ -18,6 +18,7 @@
 
 static uint32_t fsm_led_on_time = 75;
 static uint32_t fsm_led_off_time = 425;
+static bool long_btn_press = false;
 
 static struct FSMcontext fsm_ctx;
 
@@ -226,8 +227,9 @@ static void routine_listening(void* data)
     {
         fsm_led_off_time = 40;
         fsm_led_on_time = 160;
+        ctx->time_over_threshold = 0;
         ctx->previous_state = STATE_LISTENING;
-        HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n--- Entered LISTENING State ---\r\n", 35, 100);
+        HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n--- Entered LISTENING State ---\r\n", 35, HAL_MAX_DELAY);
         HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
         __HAL_TIM_SET_AUTORELOAD(&htim14, fsm_led_on_time - 1);
         __HAL_TIM_SET_COUNTER(&htim14, 0);
@@ -254,6 +256,7 @@ static void routine_listening(void* data)
             }
             else if(HAL_GetTick() - ctx->time_over_threshold >= 5000)
             {
+                ctx->time_over_threshold = 0;
                 fsm_api_transition_to(&ctx->handler, STATE_WARNING);
             }
         }
@@ -266,9 +269,7 @@ static void routine_listening(void* data)
     if(HAL_GetTick() - ctx->uart_last_tx_time >= 100)
     {
         ctx->uart_last_tx_time = HAL_GetTick();
-        char msg_buffer[64];
-        int len = snprintf(msg_buffer, sizeof(msg_buffer), "POT: %u, NTC: %u, DIFF: %u\r\n", pot_raw, ntc_raw, diff);
-        HAL_UART_Transmit(&huart2, (uint8_t*)msg_buffer, len, HAL_MAX_DELAY);
+        telemetry_update();
     }
 
     if(button_was_pressed())
@@ -284,36 +285,105 @@ static void routine_warning(void* data)
     struct FSMcontext (*ctx) = (struct FSMcontext*)data;
     if(ctx->previous_state != STATE_WARNING)
     {
-        HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n--- Entered WARNING State ---\r\n", 35, 100);
+        HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n--- Entered WARNING State ---\r\n", 35, HAL_MAX_DELAY);
         ctx->previous_state = STATE_WARNING;
-
+        long_btn_press = false;
+        button_was_pressed();
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
-        HAL_TIM_Base_Stop(&htim14);
+        HAL_TIM_Base_Stop_IT(&htim14);
         HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
         ctx->warning_start_time = HAL_GetTick();
         ctx->warning_press_time = 0;
     }  
+
     if(HAL_GetTick() - ctx->uart_last_tx_time >= 200)
     {
-        ctx->uart_last_tx_time = HAL_GetTick;
-        HAL_UART_Transmit(&huart2, (uint8_t*)"\r\nWARNING\r\n", 35, 100);
+        ctx->uart_last_tx_time = HAL_GetTick();
+        HAL_UART_Transmit(&huart2, (uint8_t*)"\r\nWARNING\r\n", 11, HAL_MAX_DELAY);
     }
 
-    
+    if(HAL_GetTick() - ctx->warning_start_time >= 10000)
+    {
+        ctx->error_description = "Warning state for 10+ seconds -> transitioning to fatal state";
+        fsm_api_transition_to(&ctx->handler, STATE_FATAL);
+        return;
+    }
 
-    
+    if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == GPIO_PIN_RESET)
+    {
+        if(ctx->warning_press_time == 0)
+        {
+            ctx->warning_press_time = HAL_GetTick();
+        }
+        else if(HAL_GetTick() - ctx->warning_press_time >= 2000)
+        {
+            long_btn_press = true;
+        }
+    }
+    else
+    {
+        if(long_btn_press)
+        {
+            long_btn_press = false;
+            ctx->warning_press_time = 0;
+            button_was_pressed();
+            fsm_api_transition_to(&ctx->handler, STATE_WAITING);
+            return;
+        }
+        button_was_pressed();
+        ctx->warning_press_time = 0;
+    }   
 }
 static void routine_paused(void* data)
 {
-    
+    struct FSMcontext (*ctx) = (struct FSMcontext*)data;
+    if(ctx->previous_state != STATE_PAUSED)
+    {
+        ctx->previous_state = STATE_PAUSED;
+        fsm_led_off_time = 1000;
+        fsm_led_on_time = 1000;
+        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+        __HAL_TIM_SET_AUTORELOAD(&htim14, fsm_led_on_time - 1);
+        __HAL_TIM_SET_COUNTER(&htim14, 0);
+        HAL_TIM_Base_Start_IT(&htim14);
+        HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+        __HAL_TIM_MOE_ENABLE(&htim1);
+        HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n--- Entered PAUSED State ---\r\n", strlen("\r\n--- Entered PAUSED State ---\r\n"), HAL_MAX_DELAY);
+        cli_print_menu();
+    }
+    cli_update();
+    button_state_update();
+    uint32_t t = HAL_GetTick() % 2000;
+    uint32_t compare_val = 0;
+
+    if(t<=1000)
+    {
+        compare_val = (t*999)/1000; 
+    }
+    else
+    {
+        compare_val = ((2000-t)*999)/1000;
+    }
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compare_val);
+
+    if(button_was_pressed() || cli_input_run())
+    {
+        fsm_api_transition_to(&ctx->handler, STATE_LISTENING);
+    }
 }
+
+
+
+
 static void routine_fatal(void* data)
 {
     struct FSMcontext *ctx = (struct FSMcontext *)data;
     if (ctx->error_description != NULL)
     {
+        HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n--- Entered FATAL State ---\r\n", strlen("\r\n--- Entered FATAL State ---\r\n"), HAL_MAX_DELAY);
         HAL_UART_Transmit(&huart2, (uint8_t*)ctx->error_description, strlen(ctx->error_description), HAL_MAX_DELAY);
         HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n", 2, HAL_MAX_DELAY);
         ctx->error_description = NULL; // Print once
     }
+
 }

@@ -14,7 +14,7 @@
     /*!
      * \brief macro for the number of values kept in the moving average
      */ 
-    #define TELEMETRY_WINDOW_SIZE 100
+    #define TELEMETRY_WINDOW_SIZE 150
 
     /*!
      * \brief macro for the value of the noise amplitude
