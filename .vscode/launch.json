@@ -12,35 +12,32 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug",
-            "executable": "/home/matven/Documents/Uni/embedded-project/.pio/build/nucleo_c031c6/firmware.elf",
-            "projectEnvName": "nucleo_c031c6",
-            "toolchainBinDir": "/home/matven/.platformio/packages/toolchain-gccarmnoneeabi@1.70201.0/bin",
+            "executable": "/home/matven/Documents/Uni/embedded-project/.pio/build/tests/program",
+            "projectEnvName": "tests",
+            "toolchainBinDir": "/usr/bin",
             "internalConsoleOptions": "openOnSessionStart",
-            "svdPath": "/home/matven/.platformio/platforms/ststm32/misc/svd/STM32C031.svd",
             "preLaunchTask": {
                 "type": "PlatformIO",
-                "task": "Pre-Debug"
+                "task": "Pre-Debug (tests)"
             }
         },
         {
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (skip Pre-Debug)",
-            "executable": "/home/matven/Documents/Uni/embedded-project/.pio/build/nucleo_c031c6/firmware.elf",
-            "projectEnvName": "nucleo_c031c6",
-            "toolchainBinDir": "/home/matven/.platformio/packages/toolchain-gccarmnoneeabi@1.70201.0/bin",
-            "internalConsoleOptions": "openOnSessionStart",
-            "svdPath": "/home/matven/.platformio/platforms/ststm32/misc/svd/STM32C031.svd"
+            "executable": "/home/matven/Documents/Uni/embedded-project/.pio/build/tests/program",
+            "projectEnvName": "tests",
+            "toolchainBinDir": "/usr/bin",
+            "internalConsoleOptions": "openOnSessionStart"
         },
         {
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (without uploading)",
-            "executable": "/home/matven/Documents/Uni/embedded-project/.pio/build/nucleo_c031c6/firmware.elf",
-            "projectEnvName": "nucleo_c031c6",
-            "toolchainBinDir": "/home/matven/.platformio/packages/toolchain-gccarmnoneeabi@1.70201.0/bin",
+            "executable": "/home/matven/Documents/Uni/embedded-project/.pio/build/tests/program",
+            "projectEnvName": "tests",
+            "toolchainBinDir": "/usr/bin",
             "internalConsoleOptions": "openOnSessionStart",
-            "svdPath": "/home/matven/.platformio/platforms/ststm32/misc/svd/STM32C031.svd",
             "loadMode": "manual"
         }
     ]
