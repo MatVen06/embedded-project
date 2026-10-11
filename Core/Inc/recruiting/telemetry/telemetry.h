@@ -61,5 +61,43 @@
      */
     uint16_t telemetry_get_raw_ntc(void);
 
+    /*!
+     * \brief converts the raw pot values to degrees celsius
+     * \param raw_adc Raw 12-bit ADC value (0 - 4095).
+     * \return Temperature in degrees Celsius.
+     */
+    float telemetry_pot_to_celsius(uint16_t raw_adc);
+
+    /*!
+     * \brief converts the ntcs pot values to degrees celsius
+     * \param raw_adc Raw 12-bit ADC value (0 - 4095).
+     * \return Temperature in degrees Celsius.
+     */
+    float telemetry_ntc_to_celsius(uint16_t raw_adc);
+
+
+    /*!
+     * \brief Resets the moving average circular buffers, sample index, and full flag.
+     */    
+    void telemetry_filter_reset(void);
+
+    /*!
+    * \brief Inserts new potentiometer and thermistor samples into the moving average circular buffers.
+    * \param pot_sample Potentiometer raw sample to append.
+    * \param ntc_sample NTC raw sample to append.
+    */
+    void telemetry_filter_add_sample(uint16_t pot_sample, uint16_t ntc_sample);
+
+    /*!
+    * \brief Calculates and returns the current moving average of the potentiometer.
+    * \return Unsigned 16-bit moving average ADC count.
+    */
+    uint16_t telemetry_filter_get_pot_avg(void);
+
+    /*!
+    * \brief Calculates and returns the current moving average of the NTC thermistor.
+    * \return Unsigned 16-bit moving average ADC count.
+    */
+    uint16_t telemetry_filter_get_ntc_avg(void);
 
 #endif
