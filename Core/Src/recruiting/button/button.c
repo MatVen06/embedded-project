@@ -24,6 +24,10 @@ void button_test_reset(void)
     button_history = 0;
 }
 
+void button_test_trigger_press(void)
+{
+    button_state = true;
+}
 #endif
 
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) // captures user button presses

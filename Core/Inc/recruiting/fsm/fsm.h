@@ -25,12 +25,19 @@ struct FSMcontext
     uint32_t warning_press_time;
     uint32_t uart_last_tx_time;
     const char* error_description;
-    enum fsm_state_id previous_state
+    enum fsm_state_id previous_state;
 };
 
 
 void fsm_app_init(void);
 
 void fsm_app_update(void);
+
+#ifdef UNIT_TEST
+    enum fsm_state_id fsm_test_get_state(void);
+    void fsm_test_set_state(enum fsm_state_id state);
+    struct FSMcontext* fsm_test_get_context(void);
+    void fsm_test_reset(void);
+#endif
 
 #endif

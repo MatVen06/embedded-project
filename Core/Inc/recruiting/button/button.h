@@ -31,4 +31,14 @@
     void button_test_reset(void);
 #endif
 
+#ifdef UNIT_TEST
+
+    /*!
+     * \brief checks if the button pressing works for the fsm testing
+     */
+
+    void button_test_trigger_press(void);
+
+#endif
+
 #endif

@@ -99,5 +99,11 @@
     * \return Unsigned 16-bit moving average ADC count.
     */
     uint16_t telemetry_filter_get_ntc_avg(void);
+    #ifdef UNIT_TEST
+        /*!
+         * \brief Injects simulated raw ADC readings for testing POST and differential logic
+         */
+        void telemetry_test_set_raw_adc(uint16_t pot, uint16_t ntc);
+    #endif
 
 #endif

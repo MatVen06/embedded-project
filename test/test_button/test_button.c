@@ -27,7 +27,6 @@ void test_button_single_valid_press(void)
     HAL_GetTick_fake.return_val = 1000;
     HAL_GPIO_EXTI_Falling_Callback(GPIO_PIN_13);
     button_state_update();
-
     TEST_ASSERT_TRUE(button_was_pressed());
 }
 
@@ -36,11 +35,7 @@ void test_button_read_and_clear_latch(void)
     HAL_GetTick_fake.return_val = 1000;
     HAL_GPIO_EXTI_Falling_Callback(GPIO_PIN_13);
     button_state_update();
-
-    /* First read captures the event */
     TEST_ASSERT_TRUE(button_was_pressed());
-
-    /* Subsequent read must immediately return false */
     TEST_ASSERT_FALSE(button_was_pressed());
 }
 
@@ -67,13 +62,10 @@ void test_button_debounce_filters_rapid_glitches(void)
 
 void test_button_second_press_after_200ms_accepted(void)
 {
-    /* Initial valid press at t = 1000 */
     HAL_GetTick_fake.return_val = 1000;
     HAL_GPIO_EXTI_Falling_Callback(GPIO_PIN_13);
     button_state_update();
     TEST_ASSERT_TRUE(button_was_pressed());
-
-    /* Second valid press at t = 1200 (exact 200 ms boundary) */
     HAL_GetTick_fake.return_val = 1200;
     HAL_GPIO_EXTI_Falling_Callback(GPIO_PIN_13);
     button_state_update();
@@ -83,8 +75,6 @@ void test_button_second_press_after_200ms_accepted(void)
 void test_button_foreign_pin_interrupt_ignored(void)
 {
     HAL_GetTick_fake.return_val = 1000;
-
-    /* Simulate EXTI trigger from an unrelated pin (e.g., Pin 0) */
     HAL_GPIO_EXTI_Falling_Callback(0x0001);
     button_state_update();
 

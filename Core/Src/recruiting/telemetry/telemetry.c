@@ -15,22 +15,6 @@
 #define NTC_T0_KELVIN   298.15f
 #define NTC_BETA        3950.0f
 
-float telemetry_pot_to_celsius(uint16_t raw_adc)
-{
-    return POT_TEMP_MIN + ((float)raw_adc / 4095.0f) * (POT_TEMP_MAX - POT_TEMP_MIN);
-}
-
-float telemetry_ntc_to_celsius(uint16_t raw_adc)
-{
-    if (raw_adc == 0) raw_adc = 1;
-    if (raw_adc >= 4095) raw_adc = 4094;
-
-    float r_ntc = NTC_R_FIXED * ((float)raw_adc / (4095.0f - (float)raw_adc));
-    float t_kelvin = 1.0f / ((1.0f / NTC_T0_KELVIN) + (1.0f / NTC_BETA) * logf(r_ntc / NTC_R0));
-
-    return t_kelvin - 273.15f;
-}
-
 
 
     static uint16_t telemetry_adc_buffer[TELEMETRY_ADC_BUFFER_SIZE];
@@ -42,6 +26,35 @@ float telemetry_ntc_to_celsius(uint16_t raw_adc)
     static uint8_t telemetry_index_history = 0;
     static bool telemetry_buffer_full = false;
     static bool telemetry_noise_enable = false;
+
+
+    float telemetry_pot_to_celsius(uint16_t raw_adc)
+    {
+        return POT_TEMP_MIN + ((float)raw_adc / 4095.0f) * (POT_TEMP_MAX - POT_TEMP_MIN);
+    }
+
+    float telemetry_ntc_to_celsius(uint16_t raw_adc)
+    {
+        if (raw_adc == 0) raw_adc = 1;
+        if (raw_adc >= 4095) raw_adc = 4094;
+
+        float r_ntc = NTC_R_FIXED * ((float)raw_adc / (4095.0f - (float)raw_adc));
+        float t_kelvin = 1.0f / ((1.0f / NTC_T0_KELVIN) + (1.0f / NTC_BETA) * logf(r_ntc / NTC_R0));
+
+        return t_kelvin - 273.15f;
+    }
+
+#ifdef UNIT_TEST
+
+    void telemetry_test_set_raw_adc(uint16_t pot, uint16_t ntc)
+    {
+        telemetry_adc_buffer[0] = pot;
+        telemetry_adc_buffer[1] = ntc;
+    }
+
+#endif
+
+
 
 
     void telemetry_filter_reset(void)
@@ -103,80 +116,94 @@ float telemetry_ntc_to_celsius(uint16_t raw_adc)
         return (uint16_t)(ntc_sum / divisor);
     }
     #ifndef UNIT_TEST
-    void telemetry_init(void)
-    {
-        HAL_ADC_Start_DMA(&hadc1, (uint32_t*)telemetry_adc_buffer, TELEMETRY_ADC_BUFFER_SIZE);
-    }
-
-    void telemetry_update(void)
-    {
-        if ((HAL_GetTick() - telemetry_last_tx_time) >= 100) 
+        void telemetry_init(void)
         {
-            // Update the timer
-            telemetry_last_tx_time = HAL_GetTick();
+            HAL_ADC_Start_DMA(&hadc1, (uint32_t*)telemetry_adc_buffer, TELEMETRY_ADC_BUFFER_SIZE);
+        }
 
-            //values for the noise
-            uint16_t pot_raw = telemetry_adc_buffer[0];
-            uint16_t ntc_raw = telemetry_adc_buffer[1];
-            if(telemetry_noise_enable == true)
+        void telemetry_update(void)
+        {
+            if ((HAL_GetTick() - telemetry_last_tx_time) >= 100) 
             {
-                // Generate noise between -NOISE_AMPLITUDE and +NOISE_AMPLITUDE
-                int16_t pot_noise = (rand() % (2 * NOISE_AMPLITUDE + 1)) - NOISE_AMPLITUDE;
-                int16_t ntc_noise = (rand() % (2 * NOISE_AMPLITUDE + 1)) - NOISE_AMPLITUDE;
+                // Update the timer
+                telemetry_last_tx_time = HAL_GetTick();
 
-                int32_t noisy_pot = (int32_t)pot_raw + pot_noise;
-                int32_t noisy_ntc = (int32_t)ntc_raw + ntc_noise;
+                //values for the noise
+                uint16_t pot_raw = telemetry_adc_buffer[0];
+                uint16_t ntc_raw = telemetry_adc_buffer[1];
+                if(telemetry_noise_enable == true)
+                {
+                    // Generate noise between -NOISE_AMPLITUDE and +NOISE_AMPLITUDE
+                    int16_t pot_noise = (rand() % (2 * NOISE_AMPLITUDE + 1)) - NOISE_AMPLITUDE;
+                    int16_t ntc_noise = (rand() % (2 * NOISE_AMPLITUDE + 1)) - NOISE_AMPLITUDE;
 
-                // Clamp to valid 12-bit ADC range (0 to 4095)
-                if (noisy_pot < 0)    noisy_pot = 0;
-                if (noisy_pot > 4095) noisy_pot = 4095;
-                if (noisy_ntc < 0)    noisy_ntc = 0;
-                if (noisy_ntc > 4095) noisy_ntc = 4095;
+                    int32_t noisy_pot = (int32_t)pot_raw + pot_noise;
+                    int32_t noisy_ntc = (int32_t)ntc_raw + ntc_noise;
 
-                pot_raw = (uint16_t)noisy_pot;
-                ntc_raw = (uint16_t)noisy_ntc;
+                    // Clamp to valid 12-bit ADC range (0 to 4095)
+                    if (noisy_pot < 0)    noisy_pot = 0;
+                    if (noisy_pot > 4095) noisy_pot = 4095;
+                    if (noisy_ntc < 0)    noisy_ntc = 0;
+                    if (noisy_ntc > 4095) noisy_ntc = 4095;
+
+                    pot_raw = (uint16_t)noisy_pot;
+                    ntc_raw = (uint16_t)noisy_ntc;
+                }
+
+                telemetry_filter_add_sample(pot_raw, ntc_raw);
+                uint16_t pot_display_val = 0;
+                uint16_t ntc_display_val = 0;
+                const char *label_prefix = "";
+                if(current_mode == RAW)
+                {
+                    pot_display_val = pot_raw;
+                    ntc_display_val = ntc_raw;
+                    label_prefix = "RAW";
+                }
+                else if(current_mode == AVG)
+                {
+                    pot_display_val = telemetry_filter_get_pot_avg();
+                    ntc_display_val = telemetry_filter_get_ntc_avg();
+                    label_prefix = "AVG";
+                }
+                float pot_c = telemetry_pot_to_celsius(pot_display_val);
+                float ntc_c = telemetry_ntc_to_celsius(ntc_display_val);
+
+                int pot_whole = (int)pot_c;
+                int pot_frac = (int)((pot_c - pot_whole) * 10.0f);
+                if(pot_frac < 0)
+                {
+                    pot_frac = -pot_frac;
+                }
+                int ntc_whole = (int)ntc_c;
+                int ntc_frac = (int)((ntc_c - ntc_whole) * 10.0f);
+                if(ntc_frac < 0)
+                {
+                    ntc_frac = -ntc_frac;
+                }
+                int len = sprintf(telemetry_tx_buffer, 
+                            "POT_%s:%u, POT_C:%d.%d, NTC_%s:%u, NTC_C:%d.%d\r\n", 
+                            label_prefix, pot_display_val, pot_whole, pot_frac, 
+                            label_prefix, ntc_display_val, ntc_whole, ntc_frac);
+
+                HAL_UART_Transmit(&huart2, (uint8_t*)telemetry_tx_buffer, len, HAL_MAX_DELAY);
+            }   
+        }
+    #else
+            void telemetry_init(void)
+            {
+                telemetry_filter_reset();
+            }
+            
+            void telemetry_update(void)
+            {
+
             }
 
-            telemetry_filter_add_sample(pot_raw, ntc_raw);
-            uint16_t pot_display_val = 0;
-            uint16_t ntc_display_val = 0;
-            const char *label_prefix = "";
-            if(current_mode == RAW)
-            {
-                pot_display_val = pot_raw;
-                ntc_display_val = ntc_raw;
-                label_prefix = "RAW";
-            }
-            else if(current_mode == AVG)
-            {
-                pot_display_val = telemetry_filter_get_pot_avg();
-                ntc_display_val = telemetry_filter_get_ntc_avg();
-                label_prefix = "AVG";
-            }
-            float pot_c = telemetry_pot_to_celsius(pot_display_val);
-            float ntc_c = telemetry_ntc_to_celsius(ntc_display_val);
-
-            int pot_whole = (int)pot_c;
-            int pot_frac = (int)((pot_c - pot_whole) * 10.0f);
-            if(pot_frac < 0)
-            {
-                pot_frac = -pot_frac;
-            }
-            int ntc_whole = (int)ntc_c;
-            int ntc_frac = (int)((ntc_c - ntc_whole) * 10.0f);
-            if(ntc_frac < 0)
-            {
-                ntc_frac = -ntc_frac;
-            }
-            int len = sprintf(telemetry_tx_buffer, 
-                          "POT_%s:%u, POT_C:%d.%d, NTC_%s:%u, NTC_C:%d.%d\r\n", 
-                          label_prefix, pot_display_val, pot_whole, pot_frac, 
-                          label_prefix, ntc_display_val, ntc_whole, ntc_frac);
-
-            HAL_UART_Transmit(&huart2, (uint8_t*)telemetry_tx_buffer, len, HAL_MAX_DELAY);
-        }   
-    }
     #endif
+
+
+
     void telemetry_set_mode(enum telemetry_mode new_mode)
     {
         current_mode = new_mode;

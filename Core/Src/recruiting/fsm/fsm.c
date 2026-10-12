@@ -2,11 +2,57 @@
 #include "recruiting/telemetry/telemetry.h"
 #include "recruiting/button/button.h"
 #include "recruiting/cli/cli.h"
+#include <string.h>
+#include <stdio.h>
+
+#ifndef UNIT_TEST
 #include "tim.h"
 #include "main.h"
 #include "usart.h"
-#include <string.h>
-#include<stdio.h>
+#else
+#ifndef GPIO_PIN_5
+#define GPIO_PIN_5 ((uint16_t)0x0020U)
+#endif
+#ifndef GPIO_PIN_13
+#define GPIO_PIN_13 ((uint16_t)0x2000U)
+#endif
+#ifndef GPIO_PIN_SET
+#define GPIO_PIN_SET 1
+#endif
+#ifndef GPIO_PIN_RESET
+#define GPIO_PIN_RESET 0
+#endif
+#ifndef HAL_MAX_DELAY
+#define HAL_MAX_DELAY 0xFFFFFFFFU
+#endif
+#ifndef TIM_CHANNEL_1
+#define TIM_CHANNEL_1 0x00000000U
+#endif
+
+#define GPIOA ((void*)1)
+#define GPIOC ((void*)2)
+
+#define HAL_TIM_PWM_Start(...) ((void)0)
+#define __HAL_TIM_MOE_ENABLE(...) ((void)0)
+#define HAL_TIM_Base_Start_IT(...) ((void)0)
+#define HAL_TIM_Base_Stop_IT(...) ((void)0)
+#define __HAL_TIM_SET_AUTORELOAD(...) ((void)0)
+#define __HAL_TIM_SET_COUNTER(...) ((void)0)
+#define __HAL_TIM_SET_COMPARE(...) ((void)0)
+#define HAL_GPIO_WritePin(...) ((void)0)
+#define HAL_UART_Transmit(...) ((void)0)
+
+uint32_t HAL_GetTick(void);
+
+__attribute__((weak)) int HAL_GPIO_ReadPin(void *port, uint16_t pin)
+{
+    (void)port;
+    (void)pin;
+    return 1;
+}
+
+__attribute__((weak)) void NVIC_SystemReset(void) {}
+#endif
 
 #define POST_NTC_RAW_MIN 100
 #define POST_NTC_RAW_MAX 4000
@@ -30,40 +76,44 @@ static void routine_paused(void* data);
 static void routine_warning(void* data);
 static void routine_fatal(void* data);
 
+static void dummy_transition(void* data)
+{ 
+    (void)data;
+}
 
 
 static struct Transition post_transitions[] = 
 {
-    { .to = STATE_WAITING, .function = NULL},
-    { .to = STATE_FATAL, .function =  NULL},
+    { .to = STATE_WAITING, .function = dummy_transition},
+    { .to = STATE_FATAL, .function =  dummy_transition},
 };
 
 static struct Transition waiting_transitions[] = 
 {
-    { .to = STATE_LISTENING, .function = NULL},
-    { .to = STATE_FATAL, .function = NULL },
+    { .to = STATE_LISTENING, .function = dummy_transition},
+    { .to = STATE_FATAL, .function = dummy_transition },
 };
 static struct Transition listening_transitions[] = 
 {
-    { .to = STATE_WARNING, .function = NULL},
-    { .to = STATE_FATAL, .function = NULL},
-    { .to = STATE_PAUSED, .function = NULL},
+    { .to = STATE_WARNING, .function = dummy_transition},
+    { .to = STATE_FATAL, .function = dummy_transition},
+    { .to = STATE_PAUSED, .function = dummy_transition},
 };
 
 static struct Transition warning_transitions[] = 
 {
-    { .to = STATE_WAITING, .function = NULL },
-    { .to = STATE_FATAL, .function = NULL },
+    { .to = STATE_WAITING, .function = dummy_transition },
+    { .to = STATE_FATAL, .function = dummy_transition },
 };
 
 static struct Transition paused_transitions[] = 
 {
-    { .to = STATE_LISTENING, .function = NULL },
-    { .to = STATE_FATAL, .function = NULL},
+    { .to = STATE_LISTENING, .function = dummy_transition },
+    { .to = STATE_FATAL, .function = dummy_transition},
 };
 static struct Transition fatal_transitions[] = 
 {
-    { .to = STATE_FATAL, .function = NULL }
+    { .to = STATE_FATAL, .function = dummy_transition }
 };
 
 
@@ -111,6 +161,37 @@ static struct State states[] = {
         .num_transitions = EAGLETRT_FSM_TRANSITION_LEN(fatal_transitions),
     },
 };
+
+#ifdef UNIT_TEST
+
+    enum fsm_state_id fsm_test_get_state(void)
+    {
+        return (enum fsm_state_id)fsm_ctx.handler.current_state;
+    }
+    void fsm_test_set_state(enum fsm_state_id state)
+    {
+        fsm_ctx.handler.current_state = (uint8_t)state;
+        fsm_ctx.handler.requested_state = (uint8_t)state;
+        fsm_ctx.previous_state = STATE_COUNT;
+        fsm_ctx.time_over_threshold = 0;
+        fsm_ctx.warning_start_time = 0;
+        fsm_ctx.warning_press_time = 0;
+        long_btn_press = false;
+
+    }
+    struct FSMcontext* fsm_test_get_context(void)
+    {
+        return &fsm_ctx;
+    }
+    void fsm_test_reset(void)
+    {
+        fsm_app_init();
+    }
+
+#endif
+
+
+
 
 void fsm_app_init(void)
 {
@@ -163,7 +244,7 @@ static void routine_post(void* data)
     }
 }
 
-
+#ifndef UNIT_TEST
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == TIM14)
@@ -181,6 +262,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     }
 
 }
+#endif
 
 static void routine_waiting(void* data)
 {
