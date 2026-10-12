@@ -229,6 +229,8 @@ static void routine_listening(void* data)
         fsm_led_on_time = 160;
         ctx->time_over_threshold = 0;
         ctx->previous_state = STATE_LISTENING;
+        HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+        __HAL_TIM_MOE_ENABLE(&htim1);
         HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n--- Entered LISTENING State ---\r\n", 35, HAL_MAX_DELAY);
         HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
         __HAL_TIM_SET_AUTORELOAD(&htim14, fsm_led_on_time - 1);

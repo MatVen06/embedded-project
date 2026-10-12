@@ -59,6 +59,28 @@ void test_telemetry_filter_circular_rollover(void)
     TEST_ASSERT_EQUAL_UINT16(101, telemetry_filter_get_ntc_avg());
 }
 
+void test_telemetry_filter_reset_and_empty_buffer(void)
+{
+    telemetry_filter_add_sample(1500, 2500);
+    telemetry_filter_add_sample(1600, 2600);
+    telemetry_filter_reset();
+    TEST_ASSERT_EQUAL_UINT16(0, telemetry_filter_get_pot_avg());
+    TEST_ASSERT_EQUAL_UINT16(0, telemetry_filter_get_ntc_avg());
+}
+
+void test_telemetry_filter_exact_150_sample_window(void)
+{
+    for (int i = 0; i < 75; i++)
+    {
+        telemetry_filter_add_sample(200, 1000);
+    }
+    for (int i = 0; i < 75; i++)
+    {
+        telemetry_filter_add_sample(400, 3000);
+    }
+    TEST_ASSERT_EQUAL_UINT16(300, telemetry_filter_get_pot_avg());
+    TEST_ASSERT_EQUAL_UINT16(2000, telemetry_filter_get_ntc_avg());
+}
 
 int main()
 {
@@ -67,6 +89,8 @@ int main()
     RUN_TEST(test_telemetry_ntc_to_celsius_boundaries);
     RUN_TEST(test_telemetry_filter_baseline_accumulation);
     RUN_TEST(test_telemetry_filter_circular_rollover);
+    RUN_TEST(test_telemetry_filter_reset_and_empty_buffer);
+    RUN_TEST(test_telemetry_filter_exact_150_sample_window);
 
     return UNITY_END();
 }

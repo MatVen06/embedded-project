@@ -12,8 +12,7 @@
     #define CLI_BUFFER_SIZE 32
 
     /*!
-     * \brief primes the first interrupt when the board boots up
-    
+     * \brief primes the first interrupt when the board boots up   
      */
     void cli_init(void);
 
@@ -32,5 +31,34 @@
      */ 
 
     bool cli_input_run(void);
+
+    #ifdef UNIT_TEST
+    #include "recruiting/telemetry/telemetry.h"
+    /*!
+     * \brief Simulates receiving a single character via UART during unit testing
+     */
+    void cli_test_inject_char(char c);
+    
+    /*!
+     * \brief Simulates typing a complete string into the CLI during unit testing
+     */
+    void cli_test_inject_string(const char *str);
+
+    /*!
+     * \brief Resets internal CLI buffer and event flags before each unit test
+     */
+    void cli_test_reset(void);
+
+    /*!
+     * \brief Returns the last telemetry mode requested through the CLI
+     */
+    enum telemetry_mode cli_test_get_last_mode(void);
+
+    /*!
+     * \brief Returns the number of times the random noise command was executed
+     */
+    int cli_test_get_noise_toggle_count(void);
+    #endif
+
 
 #endif 

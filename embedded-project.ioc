@@ -1,7 +1,10 @@
 #MicroXplorer Configuration settings - do not modify
 ADC1.ContinuousConvMode=ENABLE
-ADC1.IPParameters=NbrOfConversionFlag,master,SelectedChannel,ContinuousConvMode
+ADC1.DMAContinuousRequests=ENABLE
+ADC1.IPParameters=NbrOfConversionFlag,master,SelectedChannel,ContinuousConvMode,DMAContinuousRequests,SamplingTimeCommon1,Overrun
 ADC1.NbrOfConversionFlag=0
+ADC1.Overrun=ADC_OVR_DATA_OVERWRITTEN
+ADC1.SamplingTimeCommon1=ADC_SAMPLETIME_160CYCLES_5
 ADC1.SelectedChannel=ADC_CHANNEL_0|ADC_CHANNEL_1
 ADC1.master=1
 BSP_IP_NAME=NUCLEO-C031C6
@@ -67,7 +70,7 @@ Mcu.UserConstants=
 Mcu.UserName=STM32C031C6Tx
 MxCube.Version=6.18.1
 MxDb.Version=DB.6.0.181
-NVIC.DMA1_Channel1_IRQn=true\:0\:0\:false\:false\:true\:false\:true\:true
+NVIC.DMA1_Channel1_IRQn=true\:0\:0\:false\:false\:true\:false\:true\:false
 NVIC.EXTI4_15_IRQn=true\:0\:0\:false\:false\:true\:true\:true\:true
 NVIC.ForceEnableDMAVector=true
 NVIC.HardFault_IRQn=true\:0\:0\:false\:false\:true\:false\:false\:false

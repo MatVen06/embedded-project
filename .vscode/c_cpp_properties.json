@@ -54,6 +54,7 @@
             },
             "defines": [
                 "PLATFORMIO=60200",
+                "UNIT_TEST",
                 "EAGLETRT_STATIC=",
                 "_XOPEN_SOURCE",
                 "UNITY_INCLUDE_CONFIG_H",
