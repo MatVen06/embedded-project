@@ -60,7 +60,7 @@ __attribute__((weak)) void NVIC_SystemReset(void) {}
 #define POST_POT_RAW_MIN 0
 #define POST_POT_RAW_MAX 4085
 
-#define WARNING_THRESHOLD 1000
+static uint16_t fsm_warning_threshold = 1000;
 
 static uint32_t fsm_led_on_time = 75;
 static uint32_t fsm_led_off_time = 425;
@@ -195,6 +195,7 @@ static struct State states[] = {
 
 void fsm_app_init(void)
 {
+    fsm_warning_threshold = 1000;
     fsm_ctx.time_over_threshold = 0;
     fsm_ctx.uart_last_tx_time = 0;
     fsm_ctx.warning_press_time = 0;
@@ -264,6 +265,29 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 }
 #endif
 
+void fsm_set_warning_threshold(uint16_t warning_threshold)
+{
+    if(warning_threshold < 50)
+    {
+        fsm_warning_threshold = 50;
+        return;
+    }
+    else if(warning_threshold > 4095)
+    {
+        fsm_warning_threshold = 4095;
+        return;
+    }
+    fsm_warning_threshold = warning_threshold;
+}
+
+uint16_t fsm_get_warning_treshold()
+{
+    return fsm_warning_threshold;
+}
+
+
+
+
 static void routine_waiting(void* data)
 {
     struct FSMcontext *ctx = (struct FSMcontext *)data;
@@ -331,7 +355,7 @@ static void routine_listening(void* data)
     else if(ntc_raw > pot_raw)
     {
         diff = ntc_raw - pot_raw;
-        if(diff >= WARNING_THRESHOLD)
+        if(diff >= fsm_warning_threshold)
         {
             compare_val = 999;
             if(ctx->time_over_threshold == 0)
@@ -347,7 +371,7 @@ static void routine_listening(void* data)
         else 
         {
             ctx->time_over_threshold = 0;
-            compare_val = (diff*999)/WARNING_THRESHOLD;
+            compare_val = (diff*999)/fsm_warning_threshold;
         }
     }
     if(HAL_GetTick() - ctx->uart_last_tx_time >= 100)

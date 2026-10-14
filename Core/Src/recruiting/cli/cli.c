@@ -1,5 +1,7 @@
 #include "recruiting/cli/cli.h"
 #include "recruiting/telemetry/telemetry.h"
+#include "recruiting/fsm/fsm.h"
+#include <stdlib.h>
 #ifndef UNIT_TEST
 #include "usart.h"
 #else
@@ -88,7 +90,21 @@ void cli_update(void)
 
                 cli_buffer[cli_buffer_index] = '\0';
 
-                if(strcmp(cli_buffer, "raw") == 0)
+                if(strncmp(cli_buffer, "threshold ", 10) == 0)
+                {
+                    int val = atoi(cli_buffer + 10);
+                    if(val <= 0)
+                    {
+                        val = 50;
+                    }
+                    char tx_buffer[64];
+                    fsm_set_warning_threshold((uint16_t)val);
+    
+                    int len = snprintf(tx_buffer, sizeof(tx_buffer), "\r\nThreshold updated to %u\r\n", fsm_get_warning_treshold());
+                    HAL_UART_Transmit(&huart2, (uint8_t*)tx_buffer, len, HAL_MAX_DELAY);
+                }
+
+                else if(strcmp(cli_buffer, "raw") == 0)
                 {
                     HAL_UART_Transmit(&huart2, (uint8_t*)"\r\nMode set to RAW\r\n", 19, HAL_MAX_DELAY);
                     telemetry_set_mode(RAW);
@@ -147,6 +163,7 @@ void cli_print_menu(void)
         "  raw            -> Stream raw data (disables noise)\r\n"
         "  moving average -> Stream 150-sample filtered average\r\n"
         "  random noise   -> Toggle artificial noise\r\n"
+        "  threshold <val>-> Set custom warning threshold\r\n"
         "  run            -> Start streaming (enter Listening state)\r\n"
         "Press button to resume streaming.\r\n"
         "> ";

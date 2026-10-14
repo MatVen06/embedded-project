@@ -33,6 +33,10 @@ void fsm_app_init(void);
 
 void fsm_app_update(void);
 
+void fsm_set_warning_threshold(uint16_t warning_threshold);
+
+uint16_t fsm_get_warning_threshold(void);
+
 #ifdef UNIT_TEST
     enum fsm_state_id fsm_test_get_state(void);
     void fsm_test_set_state(enum fsm_state_id state);
