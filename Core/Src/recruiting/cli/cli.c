@@ -100,7 +100,7 @@ void cli_update(void)
                     char tx_buffer[64];
                     fsm_set_warning_threshold((uint16_t)val);
     
-                    int len = snprintf(tx_buffer, sizeof(tx_buffer), "\r\nThreshold updated to %u\r\n", fsm_get_warning_treshold());
+                    int len = snprintf(tx_buffer, sizeof(tx_buffer), "\r\nThreshold updated to %u\r\n", fsm_get_warning_threshold());
                     HAL_UART_Transmit(&huart2, (uint8_t*)tx_buffer, len, HAL_MAX_DELAY);
                 }
 

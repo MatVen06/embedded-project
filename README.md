@@ -56,6 +56,7 @@ The project strictly follows modular embedded C guidelines, separating hardware-
   - `raw`: Sets telemetry mode to un-filtered samples.
   - `moving average`: Enables the 150-sample moving average filter.
   - `random noise`: Toggles simulated noise injection.
+  - `threshold <val>`: Dynamically sets the differential threshold for entering the Warning state (clamped to `50 ... 4095`, default: `1000`).
   - `run`: Latches an execution flag to transition the system to `STATE_LISTENING`.
 
 ### 4. Finite State Machine (`recruiting/fsm`)
@@ -70,7 +71,7 @@ Driven by the `libfsm-sw` event library, the system routes through six states:
 - **`STATE_WAITING`:** CLI active, sensor streaming paused. LD4 flashes (500 ms period, 15% duty cycle). External LED breathes via PWM (2 s period). Transition to `STATE_LISTENING` triggered by button press or CLI command `run`.
 - **`STATE_LISTENING`:** CLI inactive, telemetry streams formatted packets every 100 ms. LD4 blinks (200 ms period, 80% duty cycle). External LED PWM duty cycle indicates raw differential:
   ```text
-  Duty Cycle = (max(0, NTC - POT) / WARNING_THRESHOLD) * 100%
+  Duty Cycle = (max(0, NTC - POT) / threshold) * 100%
   ```
 - **`STATE_PAUSED`:** CLI active, telemetry streaming stopped. LD4 blinks (2000 ms period, 50% duty cycle). External LED breathes via PWM (2 s period). Button press or CLI `run` returns to `STATE_LISTENING`.
 - **`STATE_WARNING`:** Both LEDs disabled. Broadcasts `"WARNING\r\n"` over UART every 200 ms. Holding the user button for $\ge 2\text{ seconds}$ returns system to `STATE_WAITING`. Remaining in Warning for $> 10\text{ seconds}$ escalates to `STATE_FATAL`.

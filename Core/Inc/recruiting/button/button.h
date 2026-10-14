@@ -36,7 +36,6 @@
     /*!
      * \brief checks if the button pressing works for the fsm testing
      */
-
     void button_test_trigger_press(void);
 
 #endif

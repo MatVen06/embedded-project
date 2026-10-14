@@ -280,7 +280,7 @@ void fsm_set_warning_threshold(uint16_t warning_threshold)
     fsm_warning_threshold = warning_threshold;
 }
 
-uint16_t fsm_get_warning_treshold()
+uint16_t fsm_get_warning_threshold()
 {
     return fsm_warning_threshold;
 }
