@@ -113,27 +113,6 @@ int main(void)
     button_state_update();
 
     fsm_app_update();
-
-    /*
-    bool current_cli_mode = button_cli_mode();
-
-    // Detect transition from Streaming (false) -> CLI Mode (true)
-    if (current_cli_mode && !prev_cli_mode)
-    {
-        cli_print_menu();
-    }
-    prev_cli_mode = current_cli_mode;
-    if(button_cli_mode() == false)
-    {
-      telemetry_update();
-    }
-    else 
-    {
-      cli_update();
-    }
-    */
-
-    
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

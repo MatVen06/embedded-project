@@ -19,7 +19,7 @@
     /*!
      * \brief macro for the value of the noise amplitude
      */
-    #define NOISE_AMPLITUDE 150
+    #define NOISE_AMPLITUDE 50
 
     /*!
      * \brief enum for the mutually exclusive modes of reading data

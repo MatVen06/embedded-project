@@ -21,7 +21,7 @@ enum fsm_state_id
 };
 
 /*!
- * \brief Master application context structure passed to all FSM routine callbacks[cite: 15].
+ * \brief Master application context structure passed to all FSM routine callbacks
  */
 struct FSMcontext
 {
@@ -35,42 +35,42 @@ struct FSMcontext
 };
 
 /*!
- * \brief Initializes the FSM context variables, submodules, and registers the state machine engine[cite: 15, 16].
+ * \brief Initializes the FSM context variables, submodules, and registers the state machine engine
  */
 void fsm_app_init(void);
 /*!
- * \brief Executes one step of the current state routine and evaluates pending transitions[cite: 15, 16].
+ * \brief Executes one step of the current state routine and evaluates pending transitions
  */
 void fsm_app_update(void);
 /*!
- * \brief Dynamically configures the differential threshold required to trigger the Warning state[cite: 14].
- * \param warning_threshold Difference in raw ADC counts (clamped between 50 and 4095)[cite: 14].
+ * \brief Dynamically configures the differential threshold required to trigger the Warning state
+ * \param warning_threshold Difference in raw ADC counts (clamped between 50 and 4095)
  */
 void fsm_set_warning_threshold(uint16_t warning_threshold);
 /*!
- * \brief Retrieves the active differential threshold for the Warning state[cite: 14].
- * \return Current threshold value in raw ADC counts[cite: 14].
+ * \brief Retrieves the active differential threshold for the Warning state
+ * \return Current threshold value in raw ADC counts
  */
 uint16_t fsm_get_warning_threshold(void);
 
 #ifdef UNIT_TEST
     /*!
-     * \brief Returns the current active state ID during native unit testing[cite: 16].
-     * \return Active fsm_state_id enum value[cite: 16].
+     * \brief Returns the current active state ID during native unit testing
+     * \return Active fsm_state_id enum value
      */
     enum fsm_state_id fsm_test_get_state(void);
     /*!
-     * \brief Manually forces the FSM into a specific state for test staging[cite: 16].
-     * \param state Target state to stage into the context[cite: 16].
+     * \brief Manually forces the FSM into a specific state for test staging
+     * \param state Target state to stage into the context
      */
     void fsm_test_set_state(enum fsm_state_id state);
     /*!
-     * \brief Returns a pointer to the static application context for test assertions[cite: 16].
-     * \return Pointer to the active struct FSMcontext instance[cite: 16].
+     * \brief Returns a pointer to the static application context for test assertions
+     * \return Pointer to the active struct FSMcontext instance
      */
     struct FSMcontext* fsm_test_get_context(void);
     /*!
-     * \brief Resets the FSM context and restores default state machine configuration before a test[cite: 16].
+     * \brief Resets the FSM context and restores default state machine configuration before a test.
      */
     void fsm_test_reset(void);
 #endif
